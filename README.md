@@ -21,6 +21,9 @@ Ou rode você mesmo esse comando no PowerShell. Ele:
 Na primeira abertura o Seaninho Transcritor pede **sua chave de IA da Seazone** (ai-portal >
 chaves de API, começa com `sk-`). Cada pessoa usa a própria chave.
 
+Para ditar, segure `Ctrl+Alt`, fale e solte. Clique no ícone da Seazone perto do relógio para abrir o
+painel: histórico, dicionário, atalhos de texto e configurações.
+
 Para atualizar, rode o mesmo comando de novo. Seu dicionário, histórico e
 configuração ficam em `%APPDATA%\SeaninhoTranscritor` e não são apagados.
 
