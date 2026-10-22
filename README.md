@@ -1,34 +1,51 @@
-# Seaninho Transcritor — distribuição
+# Seaninho — distribuição
 
-Binários do **Seaninho Transcritor**, o app de ditado por voz da Seazone para Windows: segure
-`Ctrl+Alt`, fale, solte, e o texto aparece pronto onde o cursor estiver.
+Os dois apps de voz da Seazone para Windows:
 
-O código-fonte fica no repositório privado `seazone-tech/seaninho-transcritor`. Aqui ficam só
-os executáveis publicados, para que qualquer pessoa baixe sem precisar de login.
+- **Seaninho Transcritor (básico):** ditado por voz. Segure `Ctrl+Alt`, fale, solte, e o texto aparece pronto
+  onde o cursor estiver.
+- **Seaninho Pro:** o ditado e mais um assistente de voz: agenda e lembretes de reunião, e-mails, Google Drive e
+  planilhas, Slack, anotações e lembretes, pausas de saúde, histórico de cópias e prints (`Ctrl+Alt+V`), "responde
+  essa conversa", pesquisa rápida, sites da Seazone e os dados da empresa (Taskdex, Nekt, base de conhecimento).
 
-## Instalar
+![Seaninho Pro: as funcionalidades](docs/seaninho-pro.gif)
 
-Peça ao Claude (Claude Code ou o app do Claude no computador):
+O código-fonte fica em repositórios privados. Aqui ficam só o instalador e os executáveis publicados, para
+qualquer pessoa baixar sem login.
 
-> Instale o Seaninho Transcritor para mim rodando no PowerShell: `irm https://raw.githubusercontent.com/seazone-tech/seaninho-transcritor-dist/main/install.ps1 | iex`
+## Instalar (o jeito mais fácil: com o Claude)
 
-Ou rode você mesmo esse comando no PowerShell. Ele:
+Cole no Claude (Claude Code ou o app do Claude no computador):
 
-1. baixa o `SeaninhoTranscritor.exe` da [última release](../../releases/latest) para `%LOCALAPPDATA%\Programs\SeaninhoTranscritor`;
-2. cria o atalho no Menu Iniciar e liga "Iniciar com o Windows";
-3. abre o app.
+> Instale o Seaninho para mim seguindo https://raw.githubusercontent.com/seazone-tech/seaninho-transcritor-dist/main/INSTALAR_COM_CLAUDE.md
 
-Na primeira abertura o Seaninho Transcritor pede **sua chave de IA da Seazone** (ai-portal >
-chaves de API, começa com `sk-`). Cada pessoa usa a própria chave.
+O Claude pergunta se você quer o básico ou o Pro, instala e, no Pro, configura tudo: abre a janela do Seaninho
+para você colar sua chave de IA da Seazone (ela não passa pelo chat), conecta sua conta Google e confere quais
+sistemas da Seazone você pode consultar por voz.
 
-Para ditar, segure `Ctrl+Alt`, fale e solte. Clique no ícone da Seazone perto do relógio para abrir o
-painel: histórico, dicionário, atalhos de texto e configurações.
+## Instalar sem o Claude
 
-Para atualizar, rode o mesmo comando de novo. Seu dicionário, histórico e
-configuração ficam em `%APPDATA%\SeaninhoTranscritor` e não são apagados.
+No PowerShell (não precisa de administrador):
 
-## Para o Claude que for instalar
+```powershell
+irm https://raw.githubusercontent.com/seazone-tech/seaninho-transcritor-dist/main/install.ps1 | iex
+```
 
-- Rode o comando acima no PowerShell do usuário (não precisa de administrador).
-- Não peça nem digite a chave de API pelo usuário: o próprio app pede na primeira abertura.
-- Se o Windows SmartScreen avisar, o usuário clica em "Mais informações" > "Executar assim mesmo" (o executável não é assinado).
+Uma janela pergunta: **Sim** = Seaninho Pro, **Não** = Seaninho Transcritor (básico). O instalador baixa a
+versão escolhida para `%LOCALAPPDATA%\Programs\`, cria o atalho no Menu Iniciar, liga "Iniciar com o Windows" e
+abre o app. Se o básico já estiver instalado e você escolher o Pro, ele pergunta se troca (a chave, o dicionário e
+o histórico vão junto).
+
+Na primeira abertura o app pede **sua chave de IA da Seazone** (https://ai-portal.seazone.com.br › Nova key,
+começa com `sk-`). Cada pessoa usa a própria chave.
+
+Para atualizar, rode o mesmo comando de novo. Suas configurações ficam em `%APPDATA%\SeaninhoTranscritor` ou
+`%APPDATA%\SeaninhoPro` e não são apagadas.
+
+## Releases
+
+- Básico: releases `v*` (a "latest" é sempre o básico, para o instalador antigo continuar funcionando).
+- Pro: releases `pro-v*`, com o `SeaninhoPro.exe`.
+
+Se o Windows SmartScreen avisar, clique em "Mais informações" › "Executar assim mesmo" (os executáveis não são
+assinados).
