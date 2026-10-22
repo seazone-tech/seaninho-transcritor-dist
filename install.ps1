@@ -1,4 +1,4 @@
-﻿# Instala (ou atualiza) o Seaninho da Seazone para o usuário atual, sem precisar de administrador.
+# Instala (ou atualiza) o Seaninho da Seazone para o usuário atual, sem precisar de administrador.
 #   irm https://raw.githubusercontent.com/seazone-tech/seaninho-transcritor-dist/main/install.ps1 | iex
 #
 # Pergunta qual versão instalar:
@@ -12,6 +12,7 @@
 #   $env:SEANINHO_PRO_NO_START = "1"          não abre o app no fim (o Claude configura antes)
 #   $env:SEANINHO_PRO_EXE = "C:\...\SeaninhoPro.exe"  instala um .exe local em vez de baixar
 # Passo a passo para o Claude instalar tudo (chave, Google, Nekt): INSTALAR_COM_CLAUDE.md, neste repositório.
+# Sem BOM de propósito: com "irm | iex" o BOM gruda no primeiro comando e o PowerShell dá erro.
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
