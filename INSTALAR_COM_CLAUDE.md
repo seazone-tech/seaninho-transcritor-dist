@@ -10,7 +10,7 @@ no Claude:
 ## Para o Claude
 
 Você vai instalar o Seaninho no Windows desta pessoa, do jeito mais fácil para ela: você roda os comandos, e ela
-só cola a chave na janela do Seaninho e confirma o Google no navegador. Fale com ela em português, em frases curtas,
+só cola a chave na janela do Seaninho e autoriza as contas (Gmail, Agenda...) no Composio, pelo navegador. Fale com ela em português, em frases curtas,
 e diga o que está fazendo a cada passo. Nada aqui precisa de administrador.
 
 **Regras:**
@@ -79,19 +79,25 @@ Get-Content $out -Encoding UTF8
 `"ok": true` = chave salva e testada. `"ok": false` mostra o motivo em `erro` ("A pessoa fechou a janela da
 chave", "chave recusada"): explique e rode de novo.
 
-### 4. Google (agenda, e-mails, Drive, Tarefas)
+### 4. Contas pelo Composio (Gmail, Agenda, Drive, Tarefas, Slack)
 
-Diga antes: "Vai abrir o Google no navegador. Escolha sua conta @seazone.com.br. Vai aparecer um aviso de app não
-verificado: clique em Avançado › Acessar Sandbox. Depois marque para permitir tudo e confirme."
+O Seaninho usa as contas que a pessoa conecta no **Composio** (o mesmo que o Claude usa), com a chave da Seazone:
+não tem login do Google no app. Diga antes: "Vou abrir uma aba para cada conta que falta. Em cada uma, escolha sua
+conta @seazone.com.br e clique em permitir."
 
 ```powershell
 Start-Process $exe -ArgumentList "--conectar-google", "--saida", "`"$out`"" -Wait
 Get-Content $out -Encoding UTF8
 ```
 
-Espera até 10 minutos pela pessoa. `"ok": true` traz o e-mail conectado e, em `faltando`, o que ela não marcou
-(se faltar algo, peça para rodar de novo e marcar todas as caixas). Se ela não quiser conectar o Google, tudo bem:
-o ditado e o resto funcionam sem ele.
+- `"ok": true`: tudo conectado (`conectadas` lista as contas).
+- `"ok": false` com `abri_no_navegador`: essas abas foram abertas, cada uma com o link direto do Composio. Espere a
+  pessoa autorizar todas e rode o comando de novo para conferir. Se um link não abrir, mande ela em `portal`
+  (AI Portal › MCPs › Hub MCP › Suas contas) e diga para clicar em **Conectar** na linha do Composio.
+- `"ok": false` com `erro`: o Hub não respondeu; confira a chave (passo 3).
+
+Se ela não quiser conectar alguma conta, tudo bem: o ditado e o resto funcionam sem elas, e o próprio Seaninho
+avisa com o botão **Conectar** quando ela pedir algo que precise da conta.
 
 ### 5. Conferir e dados da Seazone (Nekt)
 
@@ -101,7 +107,7 @@ Get-Content $out -Encoding UTF8
 ```
 
 - `chave_ok`: a chave funciona no hub.seazone.dev.
-- `google.conectado` e `google.faltando`.
+- `google.conectado` e `google.contas_faltando` (contas do Composio que ainda faltam).
 - `hub.sistemas`: sistemas da Seazone que ela consegue consultar por voz com a própria chave (Taskdex, base de
   conhecimento, Reservas, Data Lake, Grafana...).
 - `hub.nekt` = false: o Nekt pede uma autorização pessoal, uma vez só. Ofereça (é opcional): abra
@@ -116,11 +122,12 @@ Start-Process $exe
 ```
 
 Diga, em poucas linhas:
-- **Ditado:** segure `Ctrl+Alt`, fale e solte. Com `Shift` junto, ele escreve a mensagem a partir do que você
-  descrever (modo Scribe).
-- **Assistente:** fale com ele segurando `Ctrl+Alt`: "qual minha próxima reunião?", "me lembra de ligar pro
+- **Ditado:** segure `Ctrl+Alt`, fale e solte. O texto sai limpo e pontuado; o `Ctrl+Alt` só dita, nunca vira
+  comando.
+- **Assistente (com Shift):** segure `Ctrl+Shift+Alt` e peça: "qual minha próxima reunião?", "me lembra de ligar pro
   cliente daqui a pouco", "tenho e-mail importante?", "abre a planilha de…", "minhas tarefas no Taskdex",
-  "vê essa conversa e responde", "abre minha saúde".
+  "vê essa conversa e responde", "abre minha saúde", "abre a conversa com a Marina no WhatsApp". Se o pedido for um
+  texto ("escreve um e-mail agradecendo a reunião"), ele escreve a mensagem pronta (modo Scribe).
 - **Cópias:** `Ctrl+Alt+V` abre o histórico de cópias e prints.
 - **Painel:** clique no ícone da Seazone perto do relógio.
 
