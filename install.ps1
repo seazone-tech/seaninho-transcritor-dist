@@ -127,7 +127,11 @@ if ($choice -ne "pro") {
         Remove-Item (Join-Path $menu "Seaninho Pro.lnk") -Force -ErrorAction SilentlyContinue
         Remove-Item $proDir -Recurse -Force -ErrorAction SilentlyContinue
     }
-    $autoStart = (-not $proHere) -or $dropPro
+    # Só cede a inicialização ao Pro se ele abre mesmo com o Windows (entrada no Run apontando para um .exe que existe):
+    # sem isso, manter os dois deixaria nenhum abrindo sozinho.
+    $proRun = "$((Get-ItemProperty $runKey -ErrorAction SilentlyContinue).SeaninhoPro)".Trim('"')
+    $proStarts = $proRun -and (Test-Path $proRun)
+    $autoStart = (-not $proStarts) -or $dropPro
     if ($autoStart) {
         Set-ItemProperty $runKey -Name "SeaninhoTranscritor" -Value "`"$basicExe`""
     } else {  # o Pro fica na inicialização: tira uma entrada antiga do básico, para não abrirem os dois
