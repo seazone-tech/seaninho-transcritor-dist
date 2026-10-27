@@ -247,17 +247,17 @@ if ($local -and (Test-Path $local)) {
     $tmp = Get-Staged $asset.browser_download_url "" $proExe $asset.size $asset.digest
 }
 
-# ---- Pro: 3. com o .exe em mãos, troca o básico e instala --------------------------------
+# ---- Pro: 3. com o .exe em mãos, instala e só então tira o básico --------------------------
 if ($hadBasic) {
     Move-BasicData  # em qualquer caso, aproveita a chave e o dicionário: ninguém precisa digitar de novo
 }
+Get-Process SeaninhoPro -ErrorAction SilentlyContinue | Stop-Process -Force
+for ($i = 0; $i -lt 30 -and (Get-Process SeaninhoPro -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 300 }
+Install-Staged $tmp $proExe  # se falhar, o script para aqui e o básico continua instalado e funcionando
 if ($replaced) {
     Write-Host "Substituindo o Seaninho Transcritor pelo Pro..."
     Remove-Basic
 }
-Get-Process SeaninhoPro -ErrorAction SilentlyContinue | Stop-Process -Force
-for ($i = 0; $i -lt 30 -and (Get-Process SeaninhoPro -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 300 }
-Install-Staged $tmp $proExe
 
 New-Shortcut "Seaninho Pro" $proExe $proDir "Seaninho Pro - ditado por voz e assistente da Seazone"
 # Só um abre com o Windows (os dois usam Ctrl+Alt): mantendo o básico, ele fica instalado, mas sai da inicialização.
