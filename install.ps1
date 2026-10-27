@@ -40,25 +40,58 @@ function New-Shortcut($name, $target, $workDir, $description) {
     $s.Save()
 }
 
-function Get-ProUrl {
-    # O Pro sai em releases "pro-v*" que não são a "latest" (a latest continua sendo o básico):
-    # pega a release mais nova que tem o SeaninhoPro.exe.
-    $releases = Invoke-RestMethod "https://api.github.com/repos/$repo/releases?per_page=30" -UseBasicParsing
-    foreach ($r in $releases) {
-        $asset = $r.assets | Where-Object { $_.name -eq "SeaninhoPro.exe" } | Select-Object -First 1
-        if ($asset) { return $asset.browser_download_url }
+function Get-ProAsset {
+    # O Pro sai em releases "pro-v*" que não são a "latest" (a latest continua sendo o básico). A lista do GitHub
+    # não vem em ordem de versão: pega a maior pro-v* publicada (sem pré-release) que tem o SeaninhoPro.exe.
+    # Vem da mais nova para a mais velha, 100 por página: se uma página inteira só tem releases do básico, a pro-v*
+    # está numa das seguintes. O app faz a mesma escolha toda vez que abre e se atualiza sozinho (scripto/updater.py).
+    # Devolve o asset do GitHub: o link, o tamanho ("size") e o SHA-256 ("digest") para conferir o download.
+    $best = $null
+    $bestAsset = $null
+    for ($page = 1; $page -le 5 -and -not $bestAsset; $page++) {
+        # Sem @(): no Windows PowerShell 5.1 o Invoke-RestMethod devolve a lista inteira como um objeto só.
+        $releases = Invoke-RestMethod "https://api.github.com/repos/$repo/releases?per_page=100&page=$page" -UseBasicParsing
+        foreach ($r in $releases) {
+            if ($r.draft -or $r.prerelease -or -not ($r.tag_name -match '^pro-v(\d+(\.\d+){1,3})$')) { continue }
+            $v = [version]$Matches[1]
+            $asset = $r.assets | Where-Object { $_.name -eq "SeaninhoPro.exe" } | Select-Object -First 1
+            if ($asset -and (-not $best -or $v -gt $best)) { $best = $v; $bestAsset = $asset }
+        }
+        if ($releases.Count -lt 100) { break }
     }
+    if ($bestAsset) { return $bestAsset }
     throw "Nao achei o SeaninhoPro.exe nas releases de $repo."
 }
 
-function Get-Staged($url, $local, $dest) {
+function Get-BasicAsset {
+    # O básico é a release "latest". Pela API vêm também o tamanho e o SHA-256 do .exe para conferir o download.
+    # Sem a API (limite de consultas), baixa pelo link direto e fica só a conferência básica (mais de 1 MB e "MZ").
+    try {
+        $r = Invoke-RestMethod "https://api.github.com/repos/$repo/releases/latest" -UseBasicParsing
+        $asset = $r.assets | Where-Object { $_.name -eq "SeaninhoTranscritor.exe" } | Select-Object -First 1
+        if ($asset) { return $asset }
+    } catch {
+        Write-Host "Nao consegui consultar a release no GitHub; baixando pelo link direto."
+    }
+    return [pscustomobject]@{ browser_download_url = "https://github.com/$repo/releases/latest/download/SeaninhoTranscritor.exe"; size = 0; digest = "" }
+}
+
+function Get-Staged($url, $local, $dest, $size = 0, $digest = "") {
     # Baixa (ou copia) para "<dest>.download" e confere que é um .exe inteiro. Só depois o chamador troca o
     # arquivo de verdade: um download interrompido nunca estraga a versão que já funciona.
+    # Com o tamanho e o SHA-256 publicados no GitHub ($size, $digest = "sha256:..."), confere os dois: um
+    # download cortado também passa de 1 MB e começa com "MZ".
     $tmp = "$dest.download"
     Remove-Item $tmp -Force -ErrorAction SilentlyContinue
     if ($local) { Copy-Item $local $tmp -Force } else { Invoke-WebRequest $url -OutFile $tmp -UseBasicParsing }
     $fs = [System.IO.File]::OpenRead($tmp)
-    try { $ok = $fs.Length -gt 1MB -and $fs.ReadByte() -eq 0x4D -and $fs.ReadByte() -eq 0x5A } finally { $fs.Close() }
+    try {
+        $ok = $fs.Length -gt 1MB -and $fs.ReadByte() -eq 0x4D -and $fs.ReadByte() -eq 0x5A
+        if ($ok -and [int64]$size -gt 0) { $ok = $fs.Length -eq [int64]$size }
+    } finally { $fs.Close() }
+    if ($ok -and "$digest" -match '^sha256:([0-9a-fA-F]{64})$') {
+        $ok = (Get-FileHash $tmp -Algorithm SHA256).Hash -eq $Matches[1]  # -eq não diferencia maiúsculas
+    }
     if (-not $ok) {
         Remove-Item $tmp -Force -ErrorAction SilentlyContinue
         throw "O download de $(Split-Path $dest -Leaf) veio incompleto. Nada foi alterado; rode o instalador de novo."
@@ -92,9 +125,10 @@ if ($choice -notin @("pro", "basico")) {
 
 # ---- Básico ------------------------------------------------------------------------
 if ($choice -ne "pro") {
-    # O Pro já está aqui? Os dois usam Ctrl+Alt: troca o Pro pelo básico ou mantém os dois, mas só um abre com o
-    # Windows (o Pro, que já estava).
-    $proHere = (Test-Path $proExe) -or ($null -ne (Get-ItemProperty $runKey -ErrorAction SilentlyContinue).SeaninhoPro)
+    # O Pro já está aqui (instalado, na inicialização ou aberto agora)? Os dois usam Ctrl+Alt: troca o Pro pelo
+    # básico ou mantém os dois, mas só um abre com o Windows (o Pro, que já estava).
+    $proHere = (Test-Path $proExe) -or ($null -ne (Get-ItemProperty $runKey -ErrorAction SilentlyContinue).SeaninhoPro) -or
+        ($null -ne (Get-Process SeaninhoPro -ErrorAction SilentlyContinue))
     $dropPro = $false
     if ($proHere) {
         $silent = $env:SEANINHO_BASICO_REPLACE
@@ -115,7 +149,8 @@ if ($choice -ne "pro") {
 
     Write-Host "Baixando a ultima versao do Seaninho Transcritor..."
     New-Item -ItemType Directory -Force $basicDir | Out-Null
-    $tmp = Get-Staged "https://github.com/$repo/releases/latest/download/SeaninhoTranscritor.exe" "" $basicExe
+    $asset = Get-BasicAsset
+    $tmp = Get-Staged $asset.browser_download_url "" $basicExe $asset.size $asset.digest
     Get-Process SeaninhoTranscritor -ErrorAction SilentlyContinue | Stop-Process -Force
     Start-Sleep -Milliseconds 500
     Install-Staged $tmp $basicExe
@@ -137,12 +172,17 @@ if ($choice -ne "pro") {
     } else {  # o Pro fica na inicialização: tira uma entrada antiga do básico, para não abrirem os dois
         Remove-ItemProperty $runKey -Name "SeaninhoTranscritor" -ErrorAction SilentlyContinue
     }
-    if (-not $env:SEANINHO_PRO_NO_START -and $autoStart) { Start-Process $basicExe }
+    # O Pro ficou e está aberto agora (mesmo sem abrir com o Windows): abrir o básico também deixaria os dois
+    # disputando o Ctrl+Alt. Ele fica na inicialização e abre na próxima vez, ou quando a pessoa fechar o Pro.
+    $proOpen = (-not $dropPro) -and ($null -ne (Get-Process SeaninhoPro -ErrorAction SilentlyContinue))
+    if (-not $env:SEANINHO_PRO_NO_START -and $autoStart -and -not $proOpen) { Start-Process $basicExe }
     Write-Host ""
     Write-Host "Seaninho Transcritor instalado em $basicDir"
     if ($dropPro) { Write-Host "O Seaninho Pro foi desinstalado. Seus dados dele continuam em $proData." }
     if (-not $autoStart) {
         Write-Host "O Pro continua abrindo com o Windows. Para usar o basico, feche o Pro antes (os dois usam Ctrl+Alt)."
+    } elseif ($proOpen) {
+        Write-Host "O Pro esta aberto agora, entao nao abri o basico. Feche o Pro antes de abrir o basico (os dois usam Ctrl+Alt)."
     }
     Write-Host "Na primeira abertura ele pede sua chave de IA da Seazone (ai-portal.seazone.com.br > Keys)."
     return
@@ -203,20 +243,21 @@ if ($local -and (Test-Path $local)) {
     $tmp = Get-Staged "" $local $proExe
 } else {
     Write-Host "Baixando a ultima versao do Seaninho Pro..."
-    $tmp = Get-Staged (Get-ProUrl) "" $proExe
+    $asset = Get-ProAsset
+    $tmp = Get-Staged $asset.browser_download_url "" $proExe $asset.size $asset.digest
 }
 
-# ---- Pro: 3. com o .exe em mãos, troca o básico e instala --------------------------------
+# ---- Pro: 3. com o .exe em mãos, instala e só então tira o básico --------------------------
 if ($hadBasic) {
     Move-BasicData  # em qualquer caso, aproveita a chave e o dicionário: ninguém precisa digitar de novo
 }
+Get-Process SeaninhoPro -ErrorAction SilentlyContinue | Stop-Process -Force
+for ($i = 0; $i -lt 30 -and (Get-Process SeaninhoPro -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 300 }
+Install-Staged $tmp $proExe  # se falhar, o script para aqui e o básico continua instalado e funcionando
 if ($replaced) {
     Write-Host "Substituindo o Seaninho Transcritor pelo Pro..."
     Remove-Basic
 }
-Get-Process SeaninhoPro -ErrorAction SilentlyContinue | Stop-Process -Force
-for ($i = 0; $i -lt 30 -and (Get-Process SeaninhoPro -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Milliseconds 300 }
-Install-Staged $tmp $proExe
 
 New-Shortcut "Seaninho Pro" $proExe $proDir "Seaninho Pro - ditado por voz e assistente da Seazone"
 # Só um abre com o Windows (os dois usam Ctrl+Alt): mantendo o básico, ele fica instalado, mas sai da inicialização.
