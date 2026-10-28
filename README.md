@@ -23,6 +23,16 @@ O Claude pergunta se você quer o básico ou o Pro, instala e, no Pro, configura
 para você colar sua chave de IA da Seazone (ela não passa pelo chat), conecta sua conta Google e confere quais
 sistemas da Seazone você pode consultar por voz.
 
+## Atualizar o Pro (com o Claude)
+
+A partir da 1.6.12, o Seaninho Pro se atualiza sozinho toda vez que abre. Quem está numa versão anterior (ou viu o
+Seaninho pedir a chave de novo depois de reiniciar, corrigido na 1.6.13.1) cola no Claude:
+
+> Atualize o meu Seaninho Pro seguindo https://raw.githubusercontent.com/seazone-tech/seaninho-transcritor-dist/main/ATUALIZAR_COM_CLAUDE.md
+
+O Claude guarda um diagnóstico na Área de Trabalho, atualiza sem mexer na chave nem nas configurações e confere se
+ficou tudo certo.
+
 ## Instalar sem o Claude
 
 No PowerShell (não precisa de administrador):
@@ -39,13 +49,15 @@ o histórico vão junto).
 Na primeira abertura o app pede **sua chave de IA da Seazone** (https://ai-portal.seazone.com.br › Nova key,
 começa com `sk-`). Cada pessoa usa a própria chave.
 
-Para atualizar, rode o mesmo comando de novo. Suas configurações ficam em `%APPDATA%\SeaninhoTranscritor` ou
-`%APPDATA%\SeaninhoPro` e não são apagadas.
+O **Pro se atualiza sozinho** (a partir da 1.6.12): toda vez que abre, confere aqui se saiu uma versão nova e
+já instala. O básico se atualiza rodando o mesmo comando de novo. Suas configurações ficam em
+`%APPDATA%\SeaninhoTranscritor` ou `%APPDATA%\SeaninhoPro` e não são apagadas.
 
 ## Releases
 
 - Básico: releases `v*` (a "latest" é sempre o básico, para o instalador antigo continuar funcionando).
-- Pro: releases `pro-v*`, com o `SeaninhoPro.exe`.
+- Pro: releases `pro-v*`, com o `SeaninhoPro.exe`. O app e o instalador pegam a de maior versão e ignoram
+  pré-releases (servem para testar antes de mandar para todo mundo).
 
 Se o Windows SmartScreen avisar, clique em "Mais informações" › "Executar assim mesmo" (os executáveis não são
 assinados).
