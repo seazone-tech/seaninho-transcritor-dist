@@ -66,7 +66,7 @@
         foreach ($k in "SEAZONE_API_KEY", "OPENAI_API_KEY", "GROQ_API_KEY") {
             if ($vars.ContainsKey($k)) {
                 $v = $vars[$k]
-                Say "  $k = $(if ($v) { "preenchida ($($v.Length) caracteres, comeca com '$($v.Substring(0, [math]::Min(3, $v.Length)))')" } else { 'VAZIA' })"
+                Say "  $k = $(if ($v) { "preenchida ($($v.Length) caracteres)" } else { 'VAZIA' })"
             }
         }
         Say "  USER_NAME = $(if ($vars['USER_NAME']) { 'preenchido' } else { 'vazio' })"
