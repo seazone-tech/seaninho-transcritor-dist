@@ -128,7 +128,9 @@ Diga, em poucas linhas:
   cliente daqui a pouco", "tenho e-mail importante?", "abre a planilha de…", "minhas tarefas no Taskdex",
   "vê essa conversa e responde", "abre minha saúde", "abre a conversa com a Marina no WhatsApp". Se o pedido for um
   texto ("escreve um e-mail agradecendo a reunião"), ele escreve a mensagem pronta (modo Scribe).
-- **Cópias:** `Ctrl+Alt+V` abre o histórico de cópias e prints.
-- **Painel:** clique no ícone da Seazone perto do relógio.
+- **Janelas:** `Ctrl+Alt+S` Saúde, `Ctrl+Alt+N` Anotações, `Ctrl+Alt+V` cópias e prints, `Ctrl+Alt+A`
+  Atualizações (avisos que passaram). Quem usa o Claude Code: `Ctrl+Alt+C` Monitor Claude e `Ctrl+Alt+L` Conta do
+  Claude.
+- **Painel:** clique no ícone da Seazone perto do relógio. O Início tem um botão para cada janela.
 
 Se algo falhar, o registro fica em `%APPDATA%\SeaninhoPro\seaninho.log`.

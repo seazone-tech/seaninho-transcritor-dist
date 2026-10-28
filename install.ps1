@@ -5,6 +5,7 @@
 #   Básico  (Seaninho Transcritor): ditado por voz. Segura Ctrl+Alt, fala, solta, o texto aparece.
 #   Pro     (Seaninho Pro): o ditado e mais um assistente de voz: agenda, e-mails, Drive, Slack, lembretes,
 #           saúde, cópias, responder conversas e os dados da Seazone (Taskdex, Nekt...).
+# Depois de instalado, o Pro se atualiza sozinho: toda vez que abre, procura uma pro-v* mais nova e já instala.
 #
 # Sem perguntas (para o Claude ou a TI):
 #   $env:SEANINHO_VERSAO = "pro" | "basico"   escolhe a versão
@@ -41,13 +42,19 @@ function New-Shortcut($name, $target, $workDir, $description) {
 }
 
 function Get-ProUrl {
-    # O Pro sai em releases "pro-v*" que não são a "latest" (a latest continua sendo o básico):
-    # pega a release mais nova que tem o SeaninhoPro.exe.
+    # O Pro sai em releases "pro-v*" que não são a "latest" (a latest continua sendo o básico). A lista do GitHub
+    # não vem em ordem de versão: pega a maior pro-v* publicada (sem pré-release) que tem o SeaninhoPro.exe.
+    # O app faz a mesma escolha toda vez que abre e se atualiza sozinho (scripto/updater.py).
     $releases = Invoke-RestMethod "https://api.github.com/repos/$repo/releases?per_page=30" -UseBasicParsing
+    $best = $null
+    $bestUrl = $null
     foreach ($r in $releases) {
+        if ($r.draft -or $r.prerelease -or -not ($r.tag_name -match '^pro-v(\d+(\.\d+){1,3})$')) { continue }
+        $v = [version]$Matches[1]
         $asset = $r.assets | Where-Object { $_.name -eq "SeaninhoPro.exe" } | Select-Object -First 1
-        if ($asset) { return $asset.browser_download_url }
+        if ($asset -and (-not $best -or $v -gt $best)) { $best = $v; $bestUrl = $asset.browser_download_url }
     }
+    if ($bestUrl) { return $bestUrl }
     throw "Nao achei o SeaninhoPro.exe nas releases de $repo."
 }
 
